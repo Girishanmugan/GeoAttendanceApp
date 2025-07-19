@@ -23,7 +23,7 @@ export const LocationProvider = ({ children }) => {
       name: 'Main Office',
       latitude: 11.198949,
       longitude: 77.476942,
-      radius: 500
+      radius: 200
     }
   ];
 

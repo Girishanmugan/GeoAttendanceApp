@@ -56,52 +56,70 @@ const ManualCheckInScreen = ({ navigation }) => {
     }
   };
 
-  const generateSuggestedLocations = (userLocation) => {
-    const locationsWithDistance = nearbyLocations.map(location => ({
+const generateSuggestedLocations = (userLocation) => {
+  const locationsWithDistance = nearbyLocations.map(location => {
+    const distance = calculateDistance(
+      userLocation.latitude,
+      userLocation.longitude,
+      location.latitude,
+      location.longitude
+    );
+    return {
       ...location,
-      distance: calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        location.latitude,
-        location.longitude
-      )
-    }));
+      distance,
+      isInRange: distance <= 500 //range
+    };
+  });
 
-    // Sort by distance and take closest 5
-    const sorted = locationsWithDistance
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 5);
+  const sorted = locationsWithDistance.sort((a, b) => a.distance - b.distance);
+  setSuggestedLocations(sorted);
+};
 
-    setSuggestedLocations(sorted);
-  };
 
-  const handleLocationCheckIn = async (location) => {
-    if (!currentLocation) {
-      Alert.alert('Error', 'Current location not available');
-      return;
-    }
+const handleLocationCheckIn = async (location) => {
+  if (!currentLocation) {
+    Alert.alert('Error', 'Current location not available');
+    return;
+  }
 
+  const distance = calculateDistance(
+    currentLocation.latitude,
+    currentLocation.longitude,
+    location.latitude,
+    location.longitude
+  );
+
+  console.log(`📏 Distance to selected location: ${distance} meters`);
+
+  if (distance > 500) {  //range
     Alert.alert(
-      'Confirm Check-In',
-      `Check in at ${location.name}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Check In',
-          onPress: async () => {
-            try {
-              await manualCheckIn(location.name, currentLocation);
-              Alert.alert('Success', 'Checked in successfully!', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-              ]);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to check in');
-            }
+      'Outside Range',
+      `You are too far from ${location.name} (Distance: ${Math.round(distance)}m). You must be within 500m to check in.`
+    );
+    return;
+  }
+
+  Alert.alert(
+    'Confirm Check-In',
+    `Check in at ${location.name}?`,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Check In',
+        onPress: async () => {
+          try {
+            await manualCheckIn(location.name, currentLocation);
+            Alert.alert('Success', 'Checked in successfully!', [
+              { text: 'OK', onPress: () => navigation.goBack() }
+            ]);
+          } catch (error) {
+            Alert.alert('Error', 'Failed to check in');
           }
         }
-      ]
-    );
-  };
+      }
+    ]
+  );
+};
 
   const handleCustomCheckIn = async () => {
     if (!customLocation.trim()) {
