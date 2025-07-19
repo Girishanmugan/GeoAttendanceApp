@@ -23,6 +23,12 @@ const HomeScreen = ({ navigation }) => {
   } = useAttendance();
   const [refreshing, setRefreshing] = useState(false);
 
+  // ✅ ADDED: log location updates to console
+  useEffect(() => {
+    console.log('📍 Location updated:', currentLocation);
+    console.log('✅ Location enabled:', isLocationEnabled);
+  }, [currentLocation, isLocationEnabled]);
+
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
@@ -62,10 +68,15 @@ const HomeScreen = ({ navigation }) => {
 
   const getLocationStatus = () => {
     if (!currentLocation) return 'Location not available';
-    
     const office = isInOfficeRadius(currentLocation.latitude, currentLocation.longitude);
     return office ? `In ${office.name}` : 'Outside office';
   };
+  if (currentLocation) {
+  console.log('✅ HomeScreen: currentLocation:', currentLocation);
+  const office = isInOfficeRadius(currentLocation.latitude, currentLocation.longitude);
+  console.log('✅ isInOfficeRadius returned:', office ? office.name : 'None');
+}
+
 
   const todayHours = getTotalWorkingHours(new Date());
   const weeklyHours = getWeeklyWorkingHours();
@@ -163,9 +174,21 @@ const HomeScreen = ({ navigation }) => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* ✅ ADDED: small debug section to see if tracking works */}
+      <View style={{ margin: 15, padding: 10, backgroundColor: '#e3f2fd', borderRadius: 8 }}>
+        <Text style={{ fontSize: 12, color: '#333' }}>📍 Debug Info:</Text>
+        <Text style={{ fontSize: 12, color: '#333' }}>
+          Location Enabled: {isLocationEnabled ? 'Yes' : 'No'}
+        </Text>
+        <Text style={{ fontSize: 12, color: '#333' }}>
+          Current Location: {currentLocation ? `${currentLocation.latitude}, ${currentLocation.longitude}` : 'N/A'}
+        </Text>
+      </View>
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

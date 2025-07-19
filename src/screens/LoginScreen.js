@@ -26,7 +26,7 @@ const LoginScreen = ({ navigation }) => {
     
     // Simulate API call
     setTimeout(() => {
-      if (employeeId === 'EMP001' && password === 'password123') {
+      if (employeeId === 'GIRI' && password === '123') {
         navigation.replace('MainApp');
       } else {
         Alert.alert('Error', 'Invalid credentials');

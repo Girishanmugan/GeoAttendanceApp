@@ -17,21 +17,13 @@ export const LocationProvider = ({ children }) => {
   const [isLocationEnabled, setIsLocationEnabled] = useState(false);
   const [watchId, setWatchId] = useState(null);
 
-  // Office locations (you can modify these coordinates)
   const officeLocations = [
     {
       id: 1,
       name: 'Main Office',
-      latitude: 28.6139,
-      longitude: 77.2090,
-      radius: 200 // 200 meters
-    },
-    {
-      id: 2,
-      name: 'Branch Office',
-      latitude: 28.7041,
-      longitude: 77.1025,
-      radius: 200
+      latitude: 11.198949,
+      longitude: 77.476942,
+      radius: 500
     }
   ];
 
@@ -58,23 +50,26 @@ export const LocationProvider = ({ children }) => {
   };
 
   const startLocationTracking = async () => {
+    console.log('📍 startLocationTracking called');
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Location permission is required for attendance tracking.');
+      Alert.alert('Permission Denied', 'Location permission is required.');
       return;
     }
 
     const id = Geolocation.watchPosition(
       (position) => {
-        setCurrentLocation({
+        const coords = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           timestamp: position.timestamp
-        });
+        };
+        console.log('✅ Updated location:', coords);
+        setCurrentLocation(coords);
         setIsLocationEnabled(true);
       },
       (error) => {
-        console.error('Location error:', error);
+        console.error('❌ Location error:', error);
         setIsLocationEnabled(false);
       },
       {
@@ -84,19 +79,20 @@ export const LocationProvider = ({ children }) => {
         distanceFilter: 10
       }
     );
-
+    console.log('📍 Location watch started, watchId:', id);
     setWatchId(id);
   };
 
   const stopLocationTracking = () => {
-    if (watchId) {
+    if (watchId != null) {
       Geolocation.clearWatch(watchId);
+      console.log('🛑 Location watch stopped, watchId:', watchId);
       setWatchId(null);
     }
   };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Earth's radius in meters
+    const R = 6371e3;
     const φ1 = lat1 * Math.PI / 180;
     const φ2 = lat2 * Math.PI / 180;
     const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -111,8 +107,17 @@ export const LocationProvider = ({ children }) => {
   };
 
   const isInOfficeRadius = (userLat, userLon) => {
+    if (!userLat || !userLon) {
+      console.log('⚠️ No user coordinates available');
+      return null;
+    }
+
     return officeLocations.find(office => {
       const distance = calculateDistance(userLat, userLon, office.latitude, office.longitude);
+      console.log(`📏 Office: ${office.name}`);
+      console.log(`   ↳ User: ${userLat}, ${userLon}`);
+      console.log(`   ↳ Office: ${office.latitude}, ${office.longitude}`);
+      console.log(`   ↳ Distance: ${distance.toFixed(2)} m (radius: ${office.radius})`);
       return distance <= office.radius;
     });
   };
@@ -139,7 +144,9 @@ export const LocationProvider = ({ children }) => {
 
   useEffect(() => {
     startLocationTracking();
-    return () => stopLocationTracking();
+    return () => {
+      stopLocationTracking();
+    };
   }, []);
 
   return (
