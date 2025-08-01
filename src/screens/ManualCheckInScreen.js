@@ -23,11 +23,11 @@ const ManualCheckInScreen = ({ navigation }) => {
 
   // Mock nearby locations (in real app, this would come from API)
   const nearbyLocations = [
-    { id: 1, name: 'Client Office - ABC Corp', latitude: 28.6139, longitude: 77.2090 },
-    { id: 2, name: 'Conference Hall - XYZ Building', latitude: 28.6129, longitude: 77.2095 },
-    { id: 3, name: 'Training Center - DEF Complex', latitude: 28.6149, longitude: 77.2085 },
-    { id: 4, name: 'Branch Office - GHI Tower', latitude: 28.6135, longitude: 77.2100 },
-    { id: 5, name: 'Meeting Room - JKL Plaza', latitude: 28.6145, longitude: 77.2080 },
+    { id: 1, name: 'Bank - KVB', latitude: 28.6139, longitude: 77.2090 },
+    { id: 2, name: 'Bank - SBI', latitude: 28.6129, longitude: 77.2095 },
+    { id: 3, name: 'Fuel quality check lab', latitude: 28.6149, longitude: 77.2085 },
+    { id: 4, name: 'Branch Office ', latitude: 28.6135, longitude: 77.2100 },
+    { id: 5, name: 'Courier pickup points', latitude: 28.6145, longitude: 77.2080 },
   ];
 
   useEffect(() => {

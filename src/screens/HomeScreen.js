@@ -209,6 +209,7 @@ const styles = StyleSheet.create({
     color: '#E3F2FD',
     marginTop: 5,
   },
+  
   statusCard: {
     backgroundColor: 'white',
     margin: 15,

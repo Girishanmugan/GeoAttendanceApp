@@ -23,7 +23,7 @@ const LoginScreen = ({ navigation }) => {
     }
 
     setIsLoading(true);
-    
+
     // Simulate API call
     setTimeout(() => {
       if (employeeId === 'GIRI' && password === '123') {
@@ -33,6 +33,17 @@ const LoginScreen = ({ navigation }) => {
       }
       setIsLoading(false);
     }, 1000);
+  };
+
+  // Optional: handle when icon button is pressed
+  const handleIconButtonPress = () => {
+    Alert.alert('Info', 'Profile button pressed!');
+    // or navigation.navigate('Profile')
+  };
+
+  // Navigate to Signup screen
+  const handleSignup = () => {
+    navigation.navigate('Signup');
   };
 
   return (
@@ -78,6 +89,16 @@ const LoginScreen = ({ navigation }) => {
             {isLoading ? 'Logging in...' : 'Login'}
           </Text>
         </TouchableOpacity>
+
+        {/* Sign Up button */}
+        <TouchableOpacity
+          style={styles.signupButton}
+          onPress={handleSignup}
+        >
+          <Text style={styles.signupButtonText}>Don't have an account? Sign Up</Text>
+        </TouchableOpacity>
+
+        {/* Icon button under login */}
       </View>
     </KeyboardAvoidingView>
   );
@@ -143,6 +164,26 @@ const styles = StyleSheet.create({
   },
   loginButtonText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  signupButton: {
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  signupButtonText: {
+    color: '#2196F3',
+    fontSize: 14,
+  },
+  iconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  iconButtonText: {
+    marginLeft: 8,
+    color: '#2196F3',
     fontSize: 16,
     fontWeight: 'bold',
   },

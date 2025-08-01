@@ -1,40 +1,29 @@
+// App.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator, StackNavigationOptions } from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { LocationProvider } from './src/context/LocationContext';
 import { AttendanceProvider } from './src/context/AttendanceContext';
 import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import AttendanceHistoryScreen from './src/screens/AttendanceHistoryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ManualCheckInScreen from './src/screens/ManualCheckInScreen';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-// Define navigation parameter types
-export type RootStackParamList = {
-  Login: undefined;
-  MainApp: undefined;
-  ManualCheckIn: undefined;
-};
+// Create navigators
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-export type TabParamList = {
-  Home: undefined;
-  History: undefined;
-  Profile: undefined;
-};
-
-// Create navigators with typing
-const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<TabParamList>();
-
-const TabNavigator: React.FC = () => {
+const TabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName: string = 'home';
+          let iconName = 'home';
 
           if (route.name === 'Home') {
             iconName = 'home';
@@ -58,25 +47,31 @@ const TabNavigator: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+// In App.js, update your navigation:
+const App = () => {
   return (
     <PaperProvider>
       <LocationProvider>
         <AttendanceProvider>
           <NavigationContainer>
             <Stack.Navigator initialRouteName="Login">
-              <Stack.Screen 
-                name="Login" 
-                component={LoginScreen} 
+              <Stack.Screen
+                name="Login"
+                component={LoginScreen}
                 options={{ headerShown: false }}
               />
-              <Stack.Screen 
-                name="MainApp" 
-                component={TabNavigator} 
+              <Stack.Screen
+                name="Signup"
+                component={SignupScreen}
                 options={{ headerShown: false }}
               />
-              <Stack.Screen 
-                name="ManualCheckIn" 
+              <Stack.Screen
+                name="MainApp"
+                component={TabNavigator}
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="ManualCheckIn"
                 component={ManualCheckInScreen}
                 options={{ title: 'Manual Check-In' }}
               />
