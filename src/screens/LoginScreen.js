@@ -7,41 +7,35 @@ import {
   StyleSheet,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 
 const LoginScreen = ({ navigation }) => {
-  const [employeeId, setEmployeeId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!employeeId || !password) {
-      Alert.alert('Error', 'Please enter both Employee ID and Password');
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both Email and Password');
       return;
     }
 
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      if (employeeId === 'GIRI' && password === '123') {
-        navigation.replace('MainApp');
-      } else {
-        Alert.alert('Error', 'Invalid credentials');
-      }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigation.replace('MainApp'); // go to your main app / home screen
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Login failed', error.message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  // Optional: handle when icon button is pressed
-  const handleIconButtonPress = () => {
-    Alert.alert('Info', 'Profile button pressed!');
-    // or navigation.navigate('Profile')
-  };
-
-  // Navigate to Signup screen
   const handleSignup = () => {
     navigation.navigate('Signup');
   };
@@ -59,12 +53,12 @@ const LoginScreen = ({ navigation }) => {
 
       <View style={styles.form}>
         <View style={styles.inputContainer}>
-          <Icon name="person" size={20} color="#666" style={styles.inputIcon} />
+          <Icon name="email" size={20} color="#666" style={styles.inputIcon} />
           <TextInput
             style={styles.input}
-            placeholder="Employee ID"
-            value={employeeId}
-            onChangeText={setEmployeeId}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
           />
         </View>
@@ -90,51 +84,31 @@ const LoginScreen = ({ navigation }) => {
           </Text>
         </TouchableOpacity>
 
-        {/* Sign Up button */}
         <TouchableOpacity
           style={styles.signupButton}
           onPress={handleSignup}
         >
           <Text style={styles.signupButtonText}>Don't have an account? Sign Up</Text>
         </TouchableOpacity>
-
-        {/* Icon button under login */}
       </View>
     </KeyboardAvoidingView>
   );
 };
 
+export default LoginScreen;
+
+// ✅ Styles (keep as you had or copy from earlier)
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 50,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 5,
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5', justifyContent: 'center', padding: 20 },
+  header: { alignItems: 'center', marginBottom: 50 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#333', marginTop: 20 },
+  subtitle: { fontSize: 16, color: '#666', marginTop: 5 },
   form: {
     backgroundColor: 'white',
     borderRadius: 10,
     padding: 30,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
@@ -146,15 +120,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     marginBottom: 20,
   },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 15,
-    color: '#333',
-  },
+  inputIcon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 16, paddingVertical: 15, color: '#333' },
   loginButton: {
     backgroundColor: '#2196F3',
     borderRadius: 5,
@@ -162,31 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  loginButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  signupButton: {
-    marginTop: 15,
-    alignItems: 'center',
-  },
-  signupButtonText: {
-    color: '#2196F3',
-    fontSize: 14,
-  },
-  iconButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-  },
-  iconButtonText: {
-    marginLeft: 8,
-    color: '#2196F3',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  loginButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  signupButton: { marginTop: 15, alignItems: 'center' },
+  signupButtonText: { color: '#2196F3', fontSize: 14 },
 });
-
-export default LoginScreen;

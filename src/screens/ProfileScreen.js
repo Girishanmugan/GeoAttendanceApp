@@ -1,17 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   ScrollView,
+  TouchableOpacity,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useAttendance } from '../context/AttendanceContext';
+import { auth } from '../firebaseConfig';
 
 const ProfileScreen = ({ navigation }) => {
   const { attendanceRecords, getWeeklyWorkingHours } = useAttendance();
+  const [user, setUser] = useState(auth.currentUser);
+
+  useEffect(() => {
+    const reloadUser = async () => {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+        setUser(auth.currentUser);
+      }
+    };
+    reloadUser();
+  }, []);
 
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
@@ -25,9 +37,7 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const totalRecords = attendanceRecords.length;
-  const completedRecords = attendanceRecords.filter(
-    (r) => r.status === 'completed'
-  ).length;
+  const completedRecords = attendanceRecords.filter((r) => r.status === 'completed').length;
   const weeklyHours = getWeeklyWorkingHours();
   const avgDailyHours = weeklyHours / 7;
 
@@ -59,10 +69,7 @@ const ProfileScreen = ({ navigation }) => {
       subtitle: 'App version and information',
       icon: 'info',
       onPress: () =>
-        Alert.alert(
-          'About',
-          'Attendance Tracker v1.0.0\nGeolocation-based attendance system'
-        ),
+        Alert.alert('About', 'Attendance Tracker v1.0.0\nGeolocation-based attendance system'),
     },
   ];
 
@@ -72,8 +79,8 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.avatarContainer}>
           <MaterialIcons name="person" size={60} color="white" />
         </View>
-        <Text style={styles.nameText}>GIRI</Text>
-        <Text style={styles.idText}>EMP001</Text>
+        <Text style={styles.nameText}>{user?.displayName || 'Unnamed User'}</Text>
+        <Text style={styles.idText}>{user?.email || 'No Email'}</Text>
       </View>
 
       <View style={styles.statsContainer}>
@@ -116,7 +123,6 @@ const ProfileScreen = ({ navigation }) => {
   );
 };
 
-// Small helper component for stats
 const StatItem = ({ label, value }) => (
   <View style={styles.statItem}>
     <Text style={styles.statValue}>{value}</Text>
