@@ -1,3 +1,4 @@
+// src/screens/LoginScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -18,23 +19,25 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter both Email and Password');
-      return;
-    }
+const handleLogin = async () => {
+  if (!email || !password) {
+    Alert.alert('Error', 'Please enter both Email and Password');
+    return;
+  }
 
-    setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigation.replace('MainApp'); // go to your main app / home screen
-    } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Login failed', error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  setIsLoading(true);
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    // ✅ No need to navigate manually.
+    // RootNavigator will detect user and show MainApp automatically.
+  } catch (error) {
+    console.error('Login error:', error);
+    Alert.alert('Login failed', error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleSignup = () => {
     navigation.navigate('Signup');
@@ -95,9 +98,6 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-export default LoginScreen;
-
-// ✅ Styles (keep as you had or copy from earlier)
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f5f5f5', justifyContent: 'center', padding: 20 },
   header: { alignItems: 'center', marginBottom: 50 },
@@ -133,3 +133,5 @@ const styles = StyleSheet.create({
   signupButton: { marginTop: 15, alignItems: 'center' },
   signupButtonText: { color: '#2196F3', fontSize: 14 },
 });
+
+export default LoginScreen;

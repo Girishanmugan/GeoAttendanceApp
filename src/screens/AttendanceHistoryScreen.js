@@ -1,123 +1,97 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  RefreshControl
+  View, Text, FlatList, TouchableOpacity, RefreshControl, ScrollView, StyleSheet
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Calendar } from 'react-native-calendars';
 import { useAttendance } from '../context/AttendanceContext';
 
 const AttendanceHistoryScreen = () => {
   const { attendanceRecords } = useAttendance();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('all'); // all, week, month
+  const [selectedMonth, setSelectedMonth] = useState(new Date()); // default: current month
 
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => setRefreshing(false), 1000);
   };
 
-  const filterRecords = () => {
-    const now = new Date();
-    let filtered = [...attendanceRecords];
+  const formatDate = (date) => new Date(date).toLocaleDateString();
+  const formatTime = (date) => new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    switch (filter) {
-      case 'week':
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        filtered = attendanceRecords.filter(record =>
-          new Date(record.checkInTime) >= weekAgo
-        );
-        break;
-      case 'month':
-        const monthAgo = new Date();
-        monthAgo.setMonth(monthAgo.getMonth() - 1);
-        filtered = attendanceRecords.filter(record =>
-          new Date(record.checkInTime) >= monthAgo
-        );
-        break;
-      default:
-        break;
-    }
+  // Filter logic
+  let filteredRecords = [...attendanceRecords];
+  const now = new Date();
+  const weekAgo = new Date(); weekAgo.setDate(now.getDate() - 7);
 
-    return filtered.sort((a, b) => new Date(b.checkInTime) - new Date(a.checkInTime));
-  };
+  if (filter === 'week') {
+    filteredRecords = filteredRecords.filter(r => new Date(r.checkInTime) >= weekAgo);
+  } else if (filter === 'month') {
+    filteredRecords = filteredRecords.filter(r => {
+      const d = new Date(r.checkInTime);
+      return d.getFullYear() === selectedMonth.getFullYear()
+          && d.getMonth() === selectedMonth.getMonth();
+    });
+  }
 
-  const formatTime = (dateString) =>
-    new Date(dateString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  filteredRecords.sort((a,b) => new Date(b.checkInTime)-new Date(a.checkInTime));
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleDateString();
+  // Mark calendar dates
+  const markedDates = {};
+  filteredRecords.forEach(record => {
+    const date = record.checkInTime.slice(0,10);
+    markedDates[date] = {
+      marked: true,
+      dotColor: record.status==='completed' ? '#4CAF50' : '#FF9800',
+    };
+  });
 
-  const filteredRecords = filterRecords();
-  const totalHours = filteredRecords
-    .filter(r => r.status === 'completed')
-    .reduce((sum, r) => sum + (r.workingHours || 0), 0);
-
-  const daysPresent = filteredRecords.filter(r => r.status === 'completed').length;
+  const totalHours = filteredRecords.filter(r=>r.status==='completed')
+    .reduce((sum, r)=>sum+(r.workingHours||0), 0);
+  const daysPresent = filteredRecords.filter(r=>r.status==='completed').length;
 
   const renderAttendanceItem = ({ item }) => (
     <View style={styles.recordItem}>
       <View style={styles.recordHeader}>
         <View style={styles.recordTitleContainer}>
-          <Icon
-            name={item.type === 'automatic' ? 'gps-fixed' : 'edit-location'}
-            size={20}
-            color={item.status === 'completed' ? '#4CAF50' : '#ff9800'}
-          />
+          <Icon name={item.type==='automatic'?'gps-fixed':'edit-location'} size={20}
+            color={item.status==='completed'?'#4CAF50':'#ff9800'} />
           <Text style={styles.recordLocation}>{item.locationName}</Text>
         </View>
-        <View style={styles.recordStatus}>
-          <Text style={[
-            styles.statusText,
-            { color: item.status === 'completed' ? '#4CAF50' : '#ff9800' }
-          ]}>
-            {item.status === 'completed' ? 'Completed' : 'Active'}
-          </Text>
-        </View>
+        <Text style={[styles.statusText, {color:item.status==='completed'?'#4CAF50':'#ff9800'}]}>
+          {item.status==='completed'?'Completed':'Active'}
+        </Text>
       </View>
-
-      <View style={styles.recordDetails}>
-        <Text style={styles.recordDate}>{formatDate(item.checkInTime)}</Text>
-        <View style={styles.timeContainer}>
+      <Text style={styles.recordDate}>{formatDate(item.checkInTime)}</Text>
+      <View style={styles.timeContainer}>
+        <View style={styles.timeItem}>
+          <Text style={styles.timeLabel}>In</Text>
+          <Text style={styles.timeValue}>{formatTime(item.checkInTime)}</Text>
+        </View>
+        {item.checkOutTime && (
           <View style={styles.timeItem}>
-            <Text style={styles.timeLabel}>Check In</Text>
-            <Text style={styles.timeValue}>{formatTime(item.checkInTime)}</Text>
+            <Text style={styles.timeLabel}>Out</Text>
+            <Text style={styles.timeValue}>{formatTime(item.checkOutTime)}</Text>
           </View>
-          {item.checkOutTime && (
-            <View style={styles.timeItem}>
-              <Text style={styles.timeLabel}>Check Out</Text>
-              <Text style={styles.timeValue}>{formatTime(item.checkOutTime)}</Text>
-            </View>
-          )}
-          {item.workingHours && (
-            <View style={styles.timeItem}>
-              <Text style={styles.timeLabel}>Hours</Text>
-              <Text style={[styles.timeValue, { color: '#4CAF50', fontWeight: 'bold' }]}>
-                {item.workingHours.toFixed(1)}h
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.typeContainer}>
-          <Text style={styles.typeText}>
-            Type: {item.type === 'automatic' ? 'Automatic' : 'Manual'}
-          </Text>
-        </View>
+        )}
+        {item.workingHours && (
+          <View style={styles.timeItem}>
+            <Text style={styles.timeLabel}>Hours</Text>
+            <Text style={[styles.timeValue, {color:'#4CAF50'}]}>{item.workingHours.toFixed(1)}h</Text>
+          </View>
+        )}
       </View>
+      <Text style={styles.typeText}>Type: {item.type==='automatic'?'Automatic':'Manual'}</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Attendance History</Text>
-      </View>
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}><Text style={styles.headerText}>Attendance History</Text></View>
 
-      {/* ✅ Added summary card */}
+      {/* Summary card */}
       <View style={styles.summaryCard}>
         <View style={styles.summaryItem}>
           <Icon name="access-time" size={24} color="#2196F3" />
@@ -136,100 +110,109 @@ const AttendanceHistoryScreen = () => {
         </View>
       </View>
 
+      {/* Filter buttons */}
       <View style={styles.filterContainer}>
-        {['all', 'week', 'month'].map(f => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterButton, filter === f && styles.activeFilterButton]}
-            onPress={() => setFilter(f)}
+        {['all','week','month'].map(f=>(
+          <TouchableOpacity key={f}
+            style={[styles.filterButton, filter===f && styles.activeFilterButton]}
+            onPress={()=>setFilter(f)}
           >
-            <Text style={[
-              styles.filterButtonText,
-              filter === f && styles.activeFilterButtonText
-            ]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
+            <Text style={[styles.filterButtonText, filter===f && styles.activeFilterButtonText]}>
+              {f.charAt(0).toUpperCase()+f.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* Calendar only in month view */}
+      {filter==='month' && (
+        <Calendar
+          markedDates={markedDates}
+          onMonthChange={(monthObj) => {
+            setSelectedMonth(new Date(monthObj.year, monthObj.month -1));
+          }}
+          style={styles.calendar}
+        />
+      )}
+
+      {/* Week mini view */}
+      {filter==='week' && (
+        <FlatList horizontal
+          data={[...new Set(filteredRecords.map(r=>r.checkInTime.slice(0,10)))]}
+          renderItem={({item})=>(
+            <View style={styles.weekItem}>
+              <Text style={styles.weekDate}>{item}</Text>
+              <Icon name="check-circle" size={20} color={markedDates[item]?.dotColor||'#ccc'} />
+            </View>
+          )}
+          keyExtractor={d=>d}
+          showsHorizontalScrollIndicator={false}
+          style={styles.weekList}
+        />
+      )}
+
+      {/* Attendance list */}
       <FlatList
         data={filteredRecords}
         renderItem={renderAttendanceItem}
-        keyExtractor={item => item.id}
-        style={styles.list}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icon name="history" size={60} color="#ccc" />
-            <Text style={styles.emptyText}>No attendance records found</Text>
-          </View>
-        }
+        keyExtractor={item=>item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={<View style={styles.emptyContainer}>
+          <Icon name="history" size={60} color="#ccc" />
+          <Text style={styles.emptyText}>No attendance records found</Text>
+        </View>}
       />
-    </View>
+    </ScrollView>
   );
 };
 
+export default AttendanceHistoryScreen;
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { backgroundColor: '#2196F3', padding: 20, paddingTop: 40 },
-  headerText: { fontSize: 24, fontWeight: 'bold', color: 'white' },
+  container: { flex:1, backgroundColor:'#f5f5f5' },
+  header: { backgroundColor:'#2196F3', padding:20, paddingTop:40 },
+  headerText: { fontSize:22, fontWeight:'bold', color:'white' },
 
   summaryCard: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    margin: 15,
-    borderRadius: 10,
-    paddingVertical: 10,
-    justifyContent: 'space-around',
-    elevation: 3,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 2,
+    flexDirection:'row', backgroundColor:'white',
+    margin:10, borderRadius:10, paddingVertical:10,
+    justifyContent:'space-around', elevation:3
   },
-  summaryItem: { alignItems: 'center' },
-  summaryValue: { fontSize: 16, fontWeight: 'bold', color: '#333', marginTop: 2 },
-  summaryLabel: { fontSize: 12, color: '#666' },
+  summaryItem:{ alignItems:'center' },
+  summaryValue:{ fontSize:16, fontWeight:'bold', color:'#333', marginTop:2 },
+  summaryLabel:{ fontSize:12, color:'#666' },
 
-  filterContainer: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    marginHorizontal: 15, marginTop: 5,
-    borderRadius: 10, padding: 5,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 3.84, elevation: 5,
+  filterContainer:{
+    flexDirection:'row', margin:10,
+    backgroundColor:'white', borderRadius:8,
+    overflow:'hidden', elevation:2
   },
-  filterButton: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
-  activeFilterButton: { backgroundColor: '#2196F3' },
-  filterButtonText: { color: '#666', fontWeight: '500' },
-  activeFilterButtonText: { color: 'white', fontWeight: 'bold' },
+  filterButton:{ flex:1, alignItems:'center', padding:10 },
+  activeFilterButton:{ backgroundColor:'#2196F3' },
+  filterButtonText:{ color:'#666' },
+  activeFilterButtonText:{ color:'white', fontWeight:'bold' },
 
-  list: { flex: 1, paddingTop: 10 },
-  recordItem: {
-    backgroundColor: 'white', marginHorizontal: 15, marginBottom: 10,
-    borderRadius: 10, padding: 15,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1, shadowRadius: 3.84, elevation: 5,
+  calendar:{ margin:10, borderRadius:8, elevation:2 },
+
+  weekList:{ padding:5 },
+  weekItem:{ alignItems:'center', margin:5 },
+  weekDate:{ fontSize:12 },
+
+  recordItem:{
+    backgroundColor:'white', margin:10, borderRadius:8,
+    padding:10, elevation:2
   },
-  recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  recordTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  recordLocation: { fontSize: 16, fontWeight: 'bold', color: '#333', marginLeft: 10 },
-  recordStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: '#f0f0f0' },
-  statusText: { fontSize: 12, fontWeight: 'bold' },
+  recordHeader:{ flexDirection:'row', justifyContent:'space-between', alignItems:'center' },
+  recordTitleContainer:{ flexDirection:'row', alignItems:'center' },
+  recordLocation:{ marginLeft:8, fontWeight:'bold', fontSize:16 },
+  statusText:{ fontSize:12, fontWeight:'bold' },
+  recordDate:{ marginTop:4, color:'#666' },
+  timeContainer:{ flexDirection:'row', justifyContent:'space-between', marginTop:4 },
+  timeItem:{ alignItems:'center' },
+  timeLabel:{ fontSize:12, color:'#444' },
+  timeValue:{ fontSize:14, fontWeight:'bold', color:'#333' },
+  typeText:{ marginTop:4, fontSize:12, color:'#666', fontStyle:'italic' },
 
-  recordDetails: { borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 10 },
-  recordDate: { fontSize: 14, color: '#666', marginBottom: 10 },
-  timeContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  timeItem: { alignItems: 'center' },
-  timeLabel: { fontSize: 12, color: '#666', marginBottom: 2 },
-  timeValue: { fontSize: 14, fontWeight: 'bold', color: '#333' },
-  typeContainer: { alignItems: 'flex-end' },
-  typeText: { fontSize: 12, color: '#666', fontStyle: 'italic' },
-
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 50 },
-  emptyText: { fontSize: 16, color: '#ccc', marginTop: 20 },
+  emptyContainer:{ alignItems:'center', justifyContent:'center', padding:50 },
+  emptyText:{ fontSize:16, color:'#ccc', marginTop:20 },
 });
-
-export default AttendanceHistoryScreen;

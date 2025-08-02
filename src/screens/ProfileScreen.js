@@ -25,16 +25,23 @@ const ProfileScreen = ({ navigation }) => {
     reloadUser();
   }, []);
 
-  const handleLogout = () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: () => navigation.replace('Login'),
+const handleLogout = () => {
+  Alert.alert('Logout', 'Are you sure you want to logout?', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Logout',
+      style: 'destructive',
+      onPress: async () => {
+        try {
+          await auth.signOut();
+        } catch (e) {
+          Alert.alert('Error', 'Failed to logout');
+        }
       },
-    ]);
-  };
+    },
+  ]);
+};
+
 
   const totalRecords = attendanceRecords.length;
   const completedRecords = attendanceRecords.filter((r) => r.status === 'completed').length;

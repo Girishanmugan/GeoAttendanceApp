@@ -7,6 +7,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import { LocationProvider } from './src/context/LocationContext';
 import { AttendanceProvider } from './src/context/AttendanceContext';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
+
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -39,27 +40,23 @@ const TabNavigator = () => (
   </Tab.Navigator>
 );
 
-const AuthStack = () => (
-  <Stack.Navigator>
-    <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-    <Stack.Screen name="Signup" component={SignupScreen} options={{ headerShown: false }} />
-  </Stack.Navigator>
-);
-
 const RootNavigator = () => {
   const { user, authInitializing } = useContext(AuthContext);
 
-  if (authInitializing) return null; // can add splash later
+  if (authInitializing) return null; // optional splash screen
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
         <>
           <Stack.Screen name="MainApp" component={TabNavigator} />
-          <Stack.Screen name="ManualCheckIn" component={ManualCheckInScreen} options={{ title: 'Manual Check-In' }} />
+          <Stack.Screen name="ManualCheckIn" component={ManualCheckInScreen} />
         </>
       ) : (
-        <Stack.Screen name="AuthStack" component={AuthStack} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+        </>
       )}
     </Stack.Navigator>
   );
